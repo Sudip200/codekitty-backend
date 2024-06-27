@@ -1,0 +1,255 @@
+# .gitignore
+
+node_modules
+
+
+# README.md
+
+This is a real time code codeeditor for collaboration and interview 
+
+
+# index.js
+
+
+const https =require('http')
+const http =require('http')
+const fs =require('fs')
+const express = require('express');
+const app = express();
+const {Server} =require('socket.io')
+
+let certificate =fs.readFileSync(__dirname+'/ssl/certificate.crt')
+let privateKey =fs.readFileSync(__dirname+'/ssl/private.key')
+let ca =fs.readFileSync(__dirname+'/ssl/ca_bundle.crt')
+
+const httpsServer=https.createServer({
+    key:privateKey,
+    cert:certificate,
+    ca:ca
+},app);
+const httpServer = http.createServer((req,res)=>{
+    res.writeHead(301,{
+        Location:'https://'+req.headers.host+req.url
+    })
+    res.end();
+
+})
+
+
+const io = new Server(httpsServer)
+//const io2 = new Server(httpServer)
+
+
+const date = new Date();
+
+
+app.get('/',(req,res)=>{
+    res.sendFile(__dirname+'/public/room.html')
+})
+app.get('/room/main-code.js',(req,res)=>{
+    res.sendFile(__dirname+'/public/main-code.js')
+})
+app.get('/room/style.css',(req,res)=>{
+    res.sendFile(__dirname+'/public/style.css')
+})
+app.get('/room/:id',(req,res)=>{
+
+    res.sendFile(__dirname+'/public/index.html')
+})
+app.get('/style2.css',(req,res)=>{
+    res.sendFile(__dirname+'/public/sliding.css')
+})
+
+
+io.on("connection",(socket)=>{
+   //get ip address of the user
+    const ip = socket.handshake.address
+    console.log("Client connected "+date.toLocaleString()+' '
+    +ip)
+    //detect which room the user connecting to
+    socket.on('joinroom',(room,peerid)=>{
+        console.log("Room "+room+" peerid "+peerid)
+        socket.join(room)
+        socket.broadcast.to(room).emit('onjoin',peerid)
+    })
+    socket.on('stream',(data,room)=>{
+        console.log("Room "+room+" message "+data)
+        io.in(room).emit('onstream',data)
+    })
+    socket.on('peerid',(data)=>{
+        console.log(data)
+        //emit to all except the sender
+        socket.broadcast.emit('onpeerid',data)
+    })
+    socket.on('onchange',(data,room)=>{
+          socket.to(room).emit('onrecv',data)
+    })
+    socket.on('onmousedown',(x,y,room)=>{
+      
+        socket.to(room).emit('onmousedown',x,y)
+    })
+    socket.on('onmousemove',(x,y,room)=>{
+        socket.to(room).emit('onmousemove',x,y)
+    })
+    socket.on('onmouseup',(room)=>{
+        socket.to(room).emit('onmouseup')
+    })
+    socket.on('clear',(room)=>{
+        socket.to(room).emit('clear')
+    })
+  
+    socket.on('disconnect',()=>{
+        console.log("Client disconnected ")
+    })
+})
+
+
+httpsServer.listen(8080, function () {
+    console.log('Example app listening on port 443');
+  }
+);
+httpServer.listen(8081, function () {
+    console.log('Example app listening on port 80');
+  }
+);
+
+
+# package.json
+
+{
+  "name": "webrtc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "nodemon": "^3.1.0",
+    "socket.io": "^4.7.5",
+    "socketio": "^1.0.0",
+    "ws": "^8.17.0"
+  }
+}
+
+
+# ca_bundle.crt
+
+-----BEGIN CERTIFICATE-----
+MIIG1TCCBL2gAwIBAgIQbFWr29AHksedBwzYEZ7WvzANBgkqhkiG9w0BAQwFADCB
+iDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCk5ldyBKZXJzZXkxFDASBgNVBAcTC0pl
+cnNleSBDaXR5MR4wHAYDVQQKExVUaGUgVVNFUlRSVVNUIE5ldHdvcmsxLjAsBgNV
+BAMTJVVTRVJUcnVzdCBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMjAw
+MTMwMDAwMDAwWhcNMzAwMTI5MjM1OTU5WjBLMQswCQYDVQQGEwJBVDEQMA4GA1UE
+ChMHWmVyb1NTTDEqMCgGA1UEAxMhWmVyb1NTTCBSU0EgRG9tYWluIFNlY3VyZSBT
+aXRlIENBMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAhmlzfqO1Mdgj
+4W3dpBPTVBX1AuvcAyG1fl0dUnw/MeueCWzRWTheZ35LVo91kLI3DDVaZKW+TBAs
+JBjEbYmMwcWSTWYCg5334SF0+ctDAsFxsX+rTDh9kSrG/4mp6OShubLaEIUJiZo4
+t873TuSd0Wj5DWt3DtpAG8T35l/v+xrN8ub8PSSoX5Vkgw+jWf4KQtNvUFLDq8mF
+WhUnPL6jHAADXpvs4lTNYwOtx9yQtbpxwSt7QJY1+ICrmRJB6BuKRt/jfDJF9Jsc
+RQVlHIxQdKAJl7oaVnXgDkqtk2qddd3kCDXd74gv813G91z7CjsGyJ93oJIlNS3U
+gFbD6V54JMgZ3rSmotYbz98oZxX7MKbtCm1aJ/q+hTv2YK1yMxrnfcieKmOYBbFD
+hnW5O6RMA703dBK92j6XRN2EttLkQuujZgy+jXRKtaWMIlkNkWJmOiHmErQngHvt
+iNkIcjJumq1ddFX4iaTI40a6zgvIBtxFeDs2RfcaH73er7ctNUUqgQT5rFgJhMmF
+x76rQgB5OZUkodb5k2ex7P+Gu4J86bS15094UuYcV09hVeknmTh5Ex9CBKipLS2W
+2wKBakf+aVYnNCU6S0nASqt2xrZpGC1v7v6DhuepyyJtn3qSV2PoBiU5Sql+aARp
+wUibQMGm44gjyNDqDlVp+ShLQlUH9x8CAwEAAaOCAXUwggFxMB8GA1UdIwQYMBaA
+FFN5v1qqK0rPVIDh2JvAnfKyA2bLMB0GA1UdDgQWBBTI2XhootkZaNU9ct5fCj7c
+tYaGpjAOBgNVHQ8BAf8EBAMCAYYwEgYDVR0TAQH/BAgwBgEB/wIBADAdBgNVHSUE
+FjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwIgYDVR0gBBswGTANBgsrBgEEAbIxAQIC
+TjAIBgZngQwBAgEwUAYDVR0fBEkwRzBFoEOgQYY/aHR0cDovL2NybC51c2VydHJ1
+c3QuY29tL1VTRVJUcnVzdFJTQUNlcnRpZmljYXRpb25BdXRob3JpdHkuY3JsMHYG
+CCsGAQUFBwEBBGowaDA/BggrBgEFBQcwAoYzaHR0cDovL2NydC51c2VydHJ1c3Qu
+Y29tL1VTRVJUcnVzdFJTQUFkZFRydXN0Q0EuY3J0MCUGCCsGAQUFBzABhhlodHRw
+Oi8vb2NzcC51c2VydHJ1c3QuY29tMA0GCSqGSIb3DQEBDAUAA4ICAQAVDwoIzQDV
+ercT0eYqZjBNJ8VNWwVFlQOtZERqn5iWnEVaLZZdzxlbvz2Fx0ExUNuUEgYkIVM4
+YocKkCQ7hO5noicoq/DrEYH5IuNcuW1I8JJZ9DLuB1fYvIHlZ2JG46iNbVKA3ygA
+Ez86RvDQlt2C494qqPVItRjrz9YlJEGT0DrttyApq0YLFDzf+Z1pkMhh7c+7fXeJ
+qmIhfJpduKc8HEQkYQQShen426S3H0JrIAbKcBCiyYFuOhfyvuwVCFDfFvrjADjd
+4jX1uQXd161IyFRbm89s2Oj5oU1wDYz5sx+hoCuh6lSs+/uPuWomIq3y1GDFNafW
++LsHBU16lQo5Q2yh25laQsKRgyPmMpHJ98edm6y2sHUabASmRHxvGiuwwE25aDU0
+2SAeepyImJ2CzB80YG7WxlynHqNhpE7xfC7PzQlLgmfEHdU+tHFeQazRQnrFkW2W
+kqRGIq7cKRnyypvjPMkjeiV9lRdAM9fSJvsB3svUuu1coIG1xxI1yegoGM4r5QP4
+RGIVvYaiI76C0djoSbQ/dkIUUXQuB8AL5jyH34g3BZaaXyvpmnV4ilppMXVAnAYG
+ON51WhJ6W0xNdNJwzYASZYH+tmCWI+N60Gv2NNMGHwMZ7e9bXgzUCZH5FaBFDGR5
+S9VWqHB73Q+OyIVvIbKYcSc2w/aSuFKGSA==
+-----END CERTIFICATE-----
+
+
+# certificate.crt
+
+-----BEGIN CERTIFICATE-----
+MIIGdDCCBFygAwIBAgIRAJeBrz+2dx/JWSHT2yt2NuQwDQYJKoZIhvcNAQEMBQAw
+SzELMAkGA1UEBhMCQVQxEDAOBgNVBAoTB1plcm9TU0wxKjAoBgNVBAMTIVplcm9T
+U0wgUlNBIERvbWFpbiBTZWN1cmUgU2l0ZSBDQTAeFw0yNDA1MDkwMDAwMDBaFw0y
+NDA4MDcyMzU5NTlaMBUxEzARBgNVBAMTCmRldjR1LmxpdmUwggEiMA0GCSqGSIb3
+DQEBAQUAA4IBDwAwggEKAoIBAQDfzIn6b/c1rB8Ep4bVkF708ohB4IjAjncozUbV
+QBLAgDSkAz2x+aT8IurBia1eXGd8i5p5+tfXI5LUAXvozQq97BEMDUEqB9Wa7HYm
+NtR4TrQiI+9U2qKX0QNXDgu27W//3JxPfR/xZL0Zci6hFed9C2BP9l6c/VihTeSE
+oeJ0uv48n5wAX2Lgz3LrRpQ7MDQtVMLwhNkgGWuP/r3z0uEGXmXZ4kEe0+G5VRE7
+RSMhJz9ERvEZ1m1bUGgVZVjzwj06rBX/4Yyomu/SEWC0W9f9IVwE2TpcJRLWv/wK
+jQ6sDjG4qY2e6s5GqntKCtHNP8ozrx0ASe/kJ+NrfTvVKsi7AgMBAAGjggKHMIIC
+gzAfBgNVHSMEGDAWgBTI2XhootkZaNU9ct5fCj7ctYaGpjAdBgNVHQ4EFgQURsUt
+0A79KaGj/tjGTBqEtC/lN0wwDgYDVR0PAQH/BAQDAgWgMAwGA1UdEwEB/wQCMAAw
+HQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMEkGA1UdIARCMEAwNAYLKwYB
+BAGyMQECAk4wJTAjBggrBgEFBQcCARYXaHR0cHM6Ly9zZWN0aWdvLmNvbS9DUFMw
+CAYGZ4EMAQIBMIGIBggrBgEFBQcBAQR8MHowSwYIKwYBBQUHMAKGP2h0dHA6Ly96
+ZXJvc3NsLmNydC5zZWN0aWdvLmNvbS9aZXJvU1NMUlNBRG9tYWluU2VjdXJlU2l0
+ZUNBLmNydDArBggrBgEFBQcwAYYfaHR0cDovL3plcm9zc2wub2NzcC5zZWN0aWdv
+LmNvbTCCAQUGCisGAQQB1nkCBAIEgfYEgfMA8QB3AHb/iD8KtvuVUcJhzPWHujS0
+pM27KdxoQgqf5mdMWjp0AAABj10oFBcAAAQDAEgwRgIhAM+iBf87kgGZ3VCT4MwG
+NM/73TpkJYnGImhL61lyf4EBAiEA2JZH+g2ccfG0xpQDUonrMhzWsy7YY85YeWGW
+IHOUHaoAdgA/F0tP1yJHWJQdZRyEvg0S7ZA3fx+FauvBvyiF7PhkbgAAAY9dKBPz
+AAAEAwBHMEUCIGr4e/sDSUyxjD1YkaLrK35GUldolazkWHTvrE2ZoJYyAiEAkvpG
+K1wRqYd5JGWK87NsZOJvOKlpj3CUvW9EoFp/yxEwJQYDVR0RBB4wHIIKZGV2NHUu
+bGl2ZYIOd3d3LmRldjR1LmxpdmUwDQYJKoZIhvcNAQEMBQADggIBAHn4OBA+cJQh
+4wtpKERr0Zobjgs7rla3hGk+Y/t9ZnkYLQd2O5XCFJ1STbPqQBkO3D+3NSG0HIte
+GqU5BhlxSBhuMcbFpFcVjVJd7Vkp7Y6Scjc1P/oowI9SGV7Bsyh4KMpE29bZ9U7x
+rok3MIJHzc8oXkSabiYvH73X68ISoxbG52+kULjL70w0/V32ZNZM12x/FY6d29uw
+QJpiJtWIC4joqOXfSQ2d8qKiHWNtUoMAzZvrbQCnvqJ5ctqA3h5xXIlRCzpQKYUo
+t/zYfxweAJli2VWfj5sVPjGgDq/HJEzhgDTN4OPtec5gWJ3iMd/2PcsZu8Cs+Txr
+wUOq2w04pt5qzTb6ad1JPqYABDvtloQDot1E05b3aUCELL96Q2UX1vj1vHulEkrB
+H2faQrYBN65r95dTZQbbkNI0xdZRSGLxihZEB7LARXb0tAe/BXNeO0ogUwG6IE72
+E5Kicz/rwr0kq2rpvu+jVJUJ45ct1P71pAvgmu1Kten2APDFJbor9zquuBkvvBq5
+Xhmm+rq9uQFOOiWDGw9/tDbU5vxTKgJtvx2vxkHXp7ldHpQaGXbGutT4UenHR17x
+pQxba7rsTffw2AgbHI6+tAg7OtZ7rJkbFq5hFDUkOtfEsJGigTwxQuZMi2dFMx1z
+95ZYN3XLzaLO0CKFZSoQ4zwe75YAPFKb
+-----END CERTIFICATE-----
+
+
+# private.key
+
+-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEA38yJ+m/3NawfBKeG1ZBe9PKIQeCIwI53KM1G1UASwIA0pAM9
+sfmk/CLqwYmtXlxnfIuaefrX1yOS1AF76M0KvewRDA1BKgfVmux2JjbUeE60IiPv
+VNqil9EDVw4Ltu1v/9ycT30f8WS9GXIuoRXnfQtgT/ZenP1YoU3khKHidLr+PJ+c
+AF9i4M9y60aUOzA0LVTC8ITZIBlrj/6989LhBl5l2eJBHtPhuVURO0UjISc/REbx
+GdZtW1BoFWVY88I9OqwV/+GMqJrv0hFgtFvX/SFcBNk6XCUS1r/8Co0OrA4xuKmN
+nurORqp7SgrRzT/KM68dAEnv5Cfja3071SrIuwIDAQABAoIBAQDcTjsdXw7ZtQAr
+0sY2gZIYSo+7Wc8EzrmaXsj1r8dF3G71bYNUKc4xriWuM1uI4im1Pq/ol/fVft1Q
++c0CVKXYZAQ7+uhE+cVaZp+/6oWpkMBeQ0WcIEWicUx6bAc4Ie/4zTDKRwAk3ugP
+noksZaWlQIek74Afxn1y/HyR29JS2NGZM02LHP8tnLTvKMS5QuyO9D2JCtvTYzjy
+Wb7aBY8XIqCDSwqGUui9O0eVICzisryCWHphhw6YbikrWw1yfZ3UL8HsvOIvrnIS
+CZ6niSfCU5BGGe+2awXlPYKotBS8UYvQ7V8/Un7f1zpwva5DIlu1eD8Z0fjlLp9b
+RPXX2Z6RAoGBAPH7fGdTaISYkl9c6UWxuSvijfWx8ls9q02aMYVykrNQDDAdbyc6
+AWzM4k4jtx1ZqoiO1CPcnW4BEsrOKO71qlXLp+0fWAGx96WMGRGJTA4olfZ0lWpP
+e9JAXFliUynhXHQAgvmMYSrkxqdVX+1dMt7rUHhdhNlgzA0Qw+aWgMUnAoGBAOzD
+ZlXtSyRtqpxKXiYDqTbOmD7lAIRBnxci/Ou6/EFwYUY6XjzIvu/vZH9UohntCwWf
+Z9Cm1zTUPejbcd6YC3Fd3hzgIRsbhek8Fy22WATk2zGG3A4DrqvoklEef1B+QlDA
+qV4IGjxynoLzT1n8gwwHRMrdUcFeSlXyM77TWiRNAoGAGzCq9eFFaUDLkbOa8p3Z
+tLisQuNP3Di9uuaMkfYhzcw80ls8VigKaPNMqoMQ3Fdq9hU2eSEc/3NXbTplFxS7
+oxBTOi2/cdFRhmSLnJDU3vJoh1zqPRvZSfK5bcHCnn4YKWC1Vt0TPgKe38aUFNPY
+F3xRenTnrJVX2E/98zcOGRkCgYBw0eeo2GsvD6b11KYqXSI8AJQhnEPzwcVKZBy7
+Q53CnQdtTJDtTAdYE+4CktSvn/nZkw0IKwhvnxdlJ3SKSk9hlQYrIk4EOchEzKKK
+4NHuexNL9WRUtUJ9nlRinTKzq4Z0LmpGaXv/A+suoTxVt/LGP4xzUqULjJ/FdqVb
+sCDLHQKBgE3j3F3EwgNIfBq5v1evQ+oQxU3f15xoPjXc4v9vObxVKs4InYSF2Vvm
+AfChhl2OmkLiKCWbZSBZteKJ1/pFy43O2gezFoMxD1dVKPJeyMH4XWNSd1KlliWt
+GSQMX4KmlESUA7tMg3SS1QWDo+A1HBkMraTpcAJ5P9VkEIS04MCr
+-----END RSA PRIVATE KEY-----
+
+

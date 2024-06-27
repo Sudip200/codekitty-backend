@@ -1,4 +1,4 @@
-const {createMysqlConnection} =require('../functions/sse');
+import { createMysqlConnection } from '../functions/sse.js';
 const connection = createMysqlConnection();
 function register(req,res){
     const { email, password, name } = req.body;
@@ -51,4 +51,4 @@ function login(req,res){
     });
 }
 
-module.exports = {register,login}
+export  {register,login}

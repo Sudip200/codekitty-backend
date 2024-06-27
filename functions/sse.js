@@ -1,7 +1,7 @@
-const mysql = require('mysql');
-const express = require('express');
+import mysql from 'mysql';
+import OpenAI from 'openai';
+import express from 'express';
 const app = express();
-
 function readChunk(res,reader){
     reader.read().then(({done,value})=>{
         if(done){
@@ -20,20 +20,23 @@ function readChunk(res,reader){
    
    }
    async function main(res,prompt,client) {
-    stream = await client.chat.completions.create({
+   let  stream = await client.chat.completions.create({
           model: "gpt-3.5-turbo",
                  
-          messages: [{ role: "user", content: prompt }],
+          messages: [
+            { role: "system", content: `You are CodeKitty a friendly AI that helps to understand github repositories.
+                 You can ask me anything about a github repository and I will try to answer it. You should not share any sensitive information with me.
+                 You should not answer any other questions than the ones related to github repositories.`},
+            { role: "user", content: prompt }],
           stream: true,
       });
       for await (const chunk of stream) {
            if(chunk.choices[0]?.finish_reason){
-              res.write('data: sdjnjsdnsdka\n\n');
               res.end();
               return;   
            }
-        res.write(`data: ${chunk.choices[0]?.delta?.content || "sdxlp"}\n\n`);
-        //res.write(chunk.choices[0]?.delta?.content)
+        //res.write(`data: ${chunk.choices[0]?.delta?.content || "sdxlp"}\n\n`);
+        res.write(chunk.choices[0]?.delta?.content)
        }
   }
 function createMysqlConnection(){
@@ -62,4 +65,4 @@ function checkifReqfromBrowser(req){
    }
 }
 
-module.exports = {readChunk,createMysqlConnection,main}
+export {createMysqlConnection,checkifReqfromBrowser,main,readChunk}
