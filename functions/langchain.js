@@ -1,8 +1,10 @@
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import { FaissStore} from "@langchain/community/vectorstores/faiss"
 import { OpenAIEmbeddings, ChatOpenAI } from "@langchain/openai";
 import { TextLoader } from "langchain/document_loaders/fs/text";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
+import fs from 'fs'
 import {
     RunnableSequence,
     RunnablePassthrough,
@@ -18,20 +20,27 @@ const message =`You are an assistant for question-answering tasks. Use the follo
 Question: {question}
 Context: {context}
 Answer:`
-async function buildRag(path,question){
+let numOfLines=0
+async function buildRag(path,question,filename){
   console.log('buildRag')
+
     const loader = new TextLoader(path); 
     const doc = await loader.load();
     const textSplitter = new RecursiveCharacterTextSplitter({
         chunkSize: 1000,
-        chunkOverlap: 200,
+        chunkOverlap: 100,
       });
       const splits = await textSplitter.splitDocuments(doc);
-      const vectorStore = await MemoryVectorStore.fromDocuments(
-        splits,
-        embedding
-      );
+       const vectorStore = await MemoryVectorStore.fromDocuments(
+         splits,
+         embedding
+        );
+      //  const vectorStore = await FaissStore.fromDocuments(
+      //    splits,
+      //   embedding
+      //  ) 
       const retriever = vectorStore.asRetriever();
+     
       const prompt = ChatPromptTemplate.fromTemplate(message);
       const llm = new ChatOpenAI({ model: "gpt-3.5-turbo", temperature: 0 , apiKey:'sk-proj-psFzu1ixHIBuMEx3FxMUT3BlbkFJOQoFZSwgUwm3pYTZUYcd'});
       const ragChain = await createStuffDocumentsChain({
@@ -39,6 +48,7 @@ async function buildRag(path,question){
         prompt,
         outputParser: new StringOutputParser(),
       });
+
       const answer = await ragChain.invoke({
         context: await retriever.invoke(question),
         question: question,

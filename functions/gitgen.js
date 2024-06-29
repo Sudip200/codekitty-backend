@@ -22,6 +22,11 @@ for(let i=0;i<repoarr.length;i++){
   if(repoarr[i].path == "package-lock.json"){
     continue
   }
+  //if file is blob like .png .jpeg .jpg .gif .svg .mp4 .mp3 .pdf .doc .docx .ppt .pptx 
+  if(repoarr[i].path.match(/\.(png|jpeg|jpg|gif|svg|mp4|mp3|pdf|doc|docx|ppt|pptx)$/)){
+    continue
+  }
+
     getRepoContent(owner,repo,repoarr[i].path)
   }
 }
@@ -59,12 +64,12 @@ for(let i=0;i<repoarr.length;i++){
  async function getRepo(owner,repo){
   console.log('getRepo')
   octokit.request("GET /repos/{owner}/{repo}/contents", {
-    owner: owner,
+    owner: owner,  
     repo: repo,
   }).then(({data}) => {
     dfs(data,owner,repo)
-  }).catch((err) => {
-    console.log(err)
+  }).catch((err) => { 
+    console.log(err) 
   }
   )
 }

@@ -5,7 +5,7 @@ import mysql from 'mysql';
 import OpenAI from 'openai';
 import { getRepo } from './functions/gitgen.js';
 import { readChunk, createMysqlConnection, main } from './functions/sse.js';
-import { register, login } from './controllers/auth.js';
+import { register, login, checkLines } from './controllers/auth.js';
 import { headers } from './middlewares/posthead.js';
 import { buildRag } from './functions/langchain.js';
 import { rejects } from 'assert';
@@ -55,7 +55,7 @@ app.get('/api/generate',async (req,res)=>{
         "Access-Control-Allow-Origin": "https://github.com",
         "Access-Control-Allow-Credentials": "true",
     });
-    
+     
     // const response=   await fetch('http://localhost:11434/api/generate',{
     //     method:'POST',
     //     body:JSON.stringify({prompt:prompt,model:model}),
@@ -87,33 +87,52 @@ app.get('/api/getrepo',(req,res)=>{
     const owner = req.query.owner;
     const repo = req.query.repo;
     console.log(owner,repo);
+    
     if(fs.existsSync(`repo/${owner}${repo}.txt`)){
         console.log('file exists');
         res.send('done');
-    }else{
+    }else{ 
         getRepo(owner,repo).then(()=>{;
         res.send('done');
         }).catch((err)=>{
             res.send(err);
         })
     }
+
     
 })
 app.post('/api/invoke',async (req,res)=>{
     const owner = req.body.owner;
     const repo = req.body.repo;
     const prompt = req.body.prompt;
+    const filename= req.body.filename;
     //check if the path file exists
-    if(fs.existsSync(`repo/${owner}${repo}.txt`)){
+    try{
+    if(fs.existsSync(`repo/${owner}${repo}.txt`)){ 
         console.log('file exists');
-        const answer =await buildRag(`repo/${owner}${repo}.txt`,prompt);
-    res.send(answer);
-    }else{
+        
+        const canDo = await checkLines(`repo/${owner}${repo}.txt`);
+         if(canDo){ 
+            res.send('file too large');
+            return;
+        }else{
+            const answer =await buildRag(`repo/${owner}${repo}.txt`,prompt,filename);
+            res.send(answer);
+        }
+       
+    }else{ 
+        console.log('error')
         res.send('something went wrong');
     }
-
+}catch(err){
+    res.send('something wrong');
+}
+ 
     
 })
+//get number of lines in a file 
+
+
 httpserver.listen((8080),()=>{
     
     console.log('Listening on port 8080');

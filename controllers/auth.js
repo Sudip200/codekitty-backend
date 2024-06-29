@@ -1,4 +1,5 @@
 import { createMysqlConnection } from '../functions/sse.js';
+import fs from 'fs';
 const connection = createMysqlConnection();
 function register(req,res){
     const { email, password, name } = req.body;
@@ -50,5 +51,21 @@ function login(req,res){
         res.send('Logged in now you can use extension');
     });
 }
-
-export  {register,login}
+function checkLines(path){
+    return new Promise((resolve, reject) => {
+        fs.readFile(path, 'utf8', function(err, data){
+            if(err) {
+                reject(err);
+                return;
+            }
+            var lines = data.trim().split('\n').length;
+            console.log(lines);
+            if(lines > 12000){
+                resolve(true);
+            } else {
+                resolve(false); 
+            }
+        });
+    });
+}
+export  {register,login,checkLines}

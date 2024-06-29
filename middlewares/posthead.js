@@ -5,8 +5,8 @@ function headers(req,res,next){
         "Access-Control-Allow-Headers": "Content-Type",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         
-    });
+    }); 
     next();
 }
-
-export {headers}
+  
+export {headers}   

@@ -18,7 +18,7 @@ function readChunk(res,reader){
      });
     
    
-   }
+   } 
    async function main(res,prompt,client) {
    let  stream = await client.chat.completions.create({
           model: "gpt-3.5-turbo",
