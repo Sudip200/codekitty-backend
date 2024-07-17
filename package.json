@@ -15,7 +15,6 @@
     "@google/generative-ai": "^0.14.1",
     "@langchain/community": "^0.2.15",
     "@langchain/google-genai": "^0.0.22",
-    "@langchain/google-vertexai": "^0.0.19",
     "@langchain/openai": "^0.2.0",
     "express": "^4.19.2",
     "faiss-node": "^0.5.1",
