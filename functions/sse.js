@@ -1,6 +1,6 @@
 import mysql from 'mysql';
 import OpenAI from 'openai';
-import express from 'express';
+import express from 'express'; 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 const app = express();
 const genAI = new GoogleGenerativeAI('AIzaSyADZAOPNRFAvkgZMTX6H0K0OF2FTp9SzWE');
