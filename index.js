@@ -4,17 +4,17 @@ import fs from 'fs';
 import mysql from 'mysql';
 import OpenAI from 'openai';
 import { getRepo } from './functions/gitgen.js';
-import { readChunk, createMysqlConnection, main } from './functions/sse.js';
+import { readChunk, createMysqlConnection, main,chatWithGemma } from './functions/sse.js';
 import { register, login, checkLines } from './controllers/auth.js';
 import { headers } from './middlewares/posthead.js';
 import { buildRag } from './functions/langchain.js';
-import { rejects } from 'assert';
-import { get } from 'http';
+
+;
 
 
 const app = express();
 
-// Rest of the code...
+// AIzaSyADZAOPNRFAvkgZMTX6H0K0OF2FTp9SzWE
 
 const client = new OpenAI({apiKey:'sk-proj-psFzu1ixHIBuMEx3FxMUT3BlbkFJOQoFZSwgUwm3pYTZUYcd'});
 
@@ -42,10 +42,7 @@ function checkRepo(owner,repo){
 
 app.get('/api/generate',async (req,res)=>{
     console.log(req.socket.remoteAddress)
-    console.log(req.headers['cookie']);
-     
-    
-
+    console.log(req.headers['cookie']); 
     const prompt = req.query.prompt;
     const model = req.query.model;
     res.set({
@@ -55,17 +52,7 @@ app.get('/api/generate',async (req,res)=>{
         "Access-Control-Allow-Origin": "https://github.com",
         "Access-Control-Allow-Credentials": "true",
     });
-     
-    // const response=   await fetch('http://localhost:11434/api/generate',{
-    //     method:'POST',
-    //     body:JSON.stringify({prompt:prompt,model:model}),
-    // });
-    // const reader = response.body.getReader();
-    // readChunk(res,reader);
-    
-   main(res,prompt,client)
- 
-  
+   main(res,prompt,client) 
 })
 app.post('/api/generate',async (req,res)=>{
     console.log(req.socket.remoteAddress)
@@ -81,7 +68,7 @@ app.post('/api/generate',async (req,res)=>{
 
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     });
-   main(res,prompt,client)
+   chatWithGemma(res,prompt)
 });
 app.get('/api/getrepo',(req,res)=>{
     const owner = req.query.owner;
@@ -125,6 +112,7 @@ app.post('/api/invoke',async (req,res)=>{
         res.send('something went wrong');
     }
 }catch(err){
+    console.log(err);
     res.send('something wrong');
 }
  

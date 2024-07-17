@@ -1,7 +1,10 @@
 import mysql from 'mysql';
 import OpenAI from 'openai';
 import express from 'express';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 const app = express();
+const genAI = new GoogleGenerativeAI('AIzaSyADZAOPNRFAvkgZMTX6H0K0OF2FTp9SzWE');
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 function readChunk(res,reader){
     reader.read().then(({done,value})=>{
         if(done){
@@ -39,6 +42,15 @@ function readChunk(res,reader){
         res.write(chunk.choices[0]?.delta?.content)
        }
   }
+  async function chatWithGemma(res,prompt){
+   const result = await model.generateContentStream(prompt);
+   for await (const chunk of result.stream) {
+    const chunkText = chunk.text();
+    res.write(chunkText);
+  }
+
+    res.end();
+  }
 function createMysqlConnection(){
     const connection = mysql.createConnection({
         host: 'localhost',
@@ -65,4 +77,4 @@ function checkifReqfromBrowser(req){
    }
 }
 
-export {createMysqlConnection,checkifReqfromBrowser,main,readChunk}
+export {createMysqlConnection,checkifReqfromBrowser,main,readChunk ,chatWithGemma}
