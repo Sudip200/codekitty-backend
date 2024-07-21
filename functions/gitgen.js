@@ -1,8 +1,9 @@
 import { Octokit } from "octokit";
 import fs from "fs";
 import path from "path";
+import 'dotenv/config'
 const octokit = new Octokit({
-auth: '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'
+auth: process.env.GIT_TOKEN
 })
 function dfs(repoarr,owner,repo){
     

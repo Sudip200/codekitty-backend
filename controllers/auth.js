@@ -60,7 +60,7 @@ function checkLines(path){
             }
             var lines = data.trim().split('\n').length;
             console.log(lines);
-            if(lines > 12000){
+            if(lines > 70000){
                 resolve(true);
             } else {
                 resolve(false); 

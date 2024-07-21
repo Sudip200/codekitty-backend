@@ -8,15 +8,12 @@ import { readChunk, createMysqlConnection, main,chatWithGemma } from './function
 import { register, login, checkLines } from './controllers/auth.js';
 import { headers } from './middlewares/posthead.js';
 import { buildRag } from './functions/langchain.js';
-
-;
+import 'dotenv/config';
 
 
 const app = express();
-
-// AIzaSyADZAOPNRFAvkgZMTX6H0K0OF2FTp9SzWE
-
-const client = new OpenAI({apiKey:'sk-proj-psFzu1ixHIBuMEx3FxMUT3BlbkFJOQoFZSwgUwm3pYTZUYcd'});
+//OpenAI client (legacy)
+const client = new OpenAI({apiKey:process.env.OPENAI_API_KEY});
 
 const httpserver = https.createServer({
     key: fs.readFileSync('/home/sudipto/ollama/sslkeys/privkey.pem'),
