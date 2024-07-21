@@ -5,7 +5,6 @@ import { OpenAIEmbeddings, ChatOpenAI  } from "@langchain/openai";
 import { GoogleGenerativeAIEmbeddings ,ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { TextLoader } from "langchain/document_loaders/fs/text";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { ChatVertexAI } from "@langchain/google-vertexai";
 import fs from 'fs'
 import {
     RunnableSequence,
