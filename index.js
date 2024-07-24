@@ -10,8 +10,7 @@ import { headers } from './middlewares/posthead.js';
 import { buildRag } from './functions/langchain.js';
 import 'dotenv/config';
 
-
-const app = express();
+const app = express(); 
 //OpenAI client (legacy)
 const client = new OpenAI({apiKey:process.env.OPENAI_API_KEY});
 
